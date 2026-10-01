@@ -93,6 +93,10 @@ label.check input { accent-color: var(--accent); }
 .slot { display: grid; gap: 4px; }
 .slot .row { gap: 8px; flex-wrap: nowrap; }
 .slot input[type=range] { min-width: 0; }
+.slot .hint { font-size: 0.78rem; color: var(--muted); min-height: 1.2em; }
+.slot.open input[type=number] { border-style: dashed; }
+.slot.open input[type=range] { accent-color: var(--muted); }
+.slot .x { padding: 2px 8px; font-size: 0.8rem; line-height: 1.4; }
 .list input[type=text] { width: 100%; }
 
 .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
@@ -328,7 +332,7 @@ function render() {
   for (const [g, cut] of CUTOFFS) {
     const x = cut * scale;
     const t = document.createElement("div"); t.className = "tick"; t.style.left = `calc(${x}% - 1px)`;
-    const l = document.createElement("div"); l.className = "ticklabel"; l.style.left = x + "%"; l.textContent = `${g} ${fmt(x, x % 1 ? 1 : 0)}`;
+    const l = document.createElement("div"); l.className = "ticklabel"; l.style.left = x + "%"; l.textContent = g; l.title = `${g} at ${fmt(x, x % 1 ? 1 : 0)}%`;
     bar.append(t, l);
   }
   $("legend").innerHTML = CATS.map(c => `<span style="--c: var(${c.color})">${c.name}</span>`).join("") +
@@ -353,8 +357,20 @@ function render() {
 
   // Assumption control.
   $("assumeRange").value = Math.round(r.assume);
-  $("assumeRange").disabled = state.assumeMatch && r.current !== null;
   $("assumeOut").textContent = fmt(r.assume, 0) + "%";
+
+  // Ungraded exam/project slots sit at the assumed score and say so.
+  for (const c of CATS) {
+    if (c.kind !== "slots") continue;
+    c.slots.forEach((_, i) => {
+      const open = parseScore(state[c.key][i]) === null;
+      $(`${c.key}-${i}-slot`).classList.toggle("open", open);
+      $(`${c.key}-${i}-x`).hidden = open;
+      $(`${c.key}-${i}`).placeholder = fmt(r.assume, 0);
+      if (open) $(`${c.key}-${i}-r`).value = Math.round(r.assume);
+      $(`${c.key}-${i}-hint`).textContent = open ? `Not taken yet · counting it as ${fmt(r.assume, 0)}%. Type or drag to try a score.` : "";
+    });
+  }
 
   // Category results.
   for (const c of CATS) {
@@ -378,12 +394,13 @@ function buildCats() {
     let body = "";
     if (c.kind === "slots") {
       body = `<div class="slots">` + c.slots.map((s, i) => `
-        <div class="slot">
-          <label class="label" for="${c.key}-${i}">${s}</label>
+        <div class="slot" id="${c.key}-${i}-slot">
+          <div class="row" style="justify-content:space-between"><label class="label" for="${c.key}-${i}">${s}</label><button type="button" class="x" id="${c.key}-${i}-x" aria-label="Clear ${s}">Clear</button></div>
           <div class="row">
             <input type="number" id="${c.key}-${i}" min="0" max="110" step="0.5" placeholder="—" value="${state[c.key][i] ?? ""}">
             <input type="range" id="${c.key}-${i}-r" min="0" max="100" step="1" value="${parseScore(state[c.key][i] ?? "") ?? 0}" aria-label="${s} slider">
           </div>
+          <div class="hint" id="${c.key}-${i}-hint"></div>
         </div>`).join("") + `</div>`;
     } else {
       body = `<div class="list">
@@ -404,13 +421,15 @@ function buildCats() {
       c.slots.forEach((_, i) => {
         const num = document.getElementById(`${c.key}-${i}`);
         const rng = document.getElementById(`${c.key}-${i}-r`);
-        rng.style.opacity = num.value === "" ? 0.4 : 1;
         num.addEventListener("input", () => {
           state[c.key][i] = num.value; touched();
-          const v = parseScore(num.value); rng.value = v ?? 0; rng.style.opacity = v === null ? 0.4 : 1;
+          const v = parseScore(num.value); if (v !== null) rng.value = v;
         });
         rng.addEventListener("input", () => {
-          num.value = rng.value; state[c.key][i] = rng.value; rng.style.opacity = 1; touched();
+          num.value = rng.value; state[c.key][i] = rng.value; touched();
+        });
+        document.getElementById(`${c.key}-${i}-x`).addEventListener("click", () => {
+          num.value = ""; state[c.key][i] = ""; touched();
         });
       });
     } else {
@@ -427,7 +446,10 @@ function syncControls() {
 }
 function touched() { state.example = false; save(); render(); }
 
-document.getElementById("assumeRange").addEventListener("input", e => { state.assume = Number(e.target.value); save(); render(); });
+document.getElementById("assumeRange").addEventListener("input", e => {
+  state.assume = Number(e.target.value); state.assumeMatch = false;
+  document.getElementById("assumeMatch").checked = false; save(); render();
+});
 document.getElementById("assumeMatch").addEventListener("change", e => { state.assumeMatch = e.target.checked; save(); render(); });
 document.getElementById("top5").addEventListener("input", e => { state.top5 = e.target.value; save(); render(); });
 document.getElementById("dropsNow").addEventListener("change", e => { state.dropsNow = e.target.checked; save(); render(); });
