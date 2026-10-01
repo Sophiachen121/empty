@@ -1,0 +1,440 @@
+<title>BIOS 1207 Grade Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a sticky-feeling summary panel (grade, bar, final-exam targets) above a stack of editable category rows. */
+:root {
+  --bg: #f3f6f2;
+  --surface: #ffffff;
+  --ink: #18251d;
+  --muted: #5d6b62;
+  --line: #d8e0d9;
+  --accent: #2f7a4f;
+  --accent-soft: #dcefe2;
+  --warn: #a35d12;
+  --bad: #b03a2e;
+  --seg1: #2f7a4f; --seg2: #4f9fb0; --seg3: #8c7ab8; --seg4: #c58b3a; --seg5: #b5596b; --seg6: #7f8f3a;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111814; --surface: #19221d; --ink: #e4ece6; --muted: #9aaba0; --line: #2c3a31;
+    --accent: #6cc48f; --accent-soft: #1f3a2a; --warn: #e0a35a; --bad: #ef8578;
+    --seg1: #6cc48f; --seg2: #6fc0d1; --seg3: #ab9ad6; --seg4: #ddaa5f; --seg5: #d98494; --seg6: #a9b95c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111814; --surface: #19221d; --ink: #e4ece6; --muted: #9aaba0; --line: #2c3a31;
+  --accent: #6cc48f; --accent-soft: #1f3a2a; --warn: #e0a35a; --bad: #ef8578;
+  --seg1: #6cc48f; --seg2: #6fc0d1; --seg3: #ab9ad6; --seg4: #ddaa5f; --seg5: #d98494; --seg6: #a9b95c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 28px 16px 64px; display: grid; gap: 20px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.15rem; font-weight: 700; }
+.sub { color: var(--muted); margin: 4px 0 0; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+
+.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px; display: grid; gap: 18px; }
+.headline { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-end; }
+.big { display: flex; align-items: baseline; gap: 14px; }
+.letter { font-family: var(--display); font-size: 3.6rem; font-weight: 700; line-height: 1; color: var(--accent); }
+.pct { font-family: var(--mono); font-size: 1.6rem; font-weight: 600; }
+.stat { display: grid; gap: 2px; }
+.stat .num { font-size: 1.05rem; }
+
+.bar { position: relative; height: 26px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); overflow: visible; }
+.bar .fill { position: absolute; inset: 0; display: flex; border-radius: 5px; overflow: hidden; }
+.bar .seg { height: 100%; }
+.bar .seg.assumed { opacity: 0.35; }
+.tick { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); opacity: 0.55; }
+.ticklabel { position: absolute; top: 30px; transform: translateX(-50%); font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 22px; font-size: 0.8rem; color: var(--muted); }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 2px; background: var(--c); margin-right: 6px; vertical-align: -1px; }
+
+.targets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.target { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; display: grid; gap: 2px; }
+.target b { font-family: var(--display); font-size: 1.1rem; }
+.target .num { font-size: 0.95rem; }
+.target.ok { background: var(--accent-soft); border-color: transparent; }
+.target.no .num { color: var(--bad); }
+
+.controls { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.control { display: grid; gap: 6px; }
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+input[type=number], input[type=text] {
+  font: inherit; font-family: var(--mono); font-size: 0.95rem; color: var(--ink); background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0;
+}
+input[type=number] { width: 5.2em; }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+label.check { display: flex; gap: 8px; align-items: center; font-size: 0.9rem; color: var(--muted); }
+label.check input { accent-color: var(--accent); }
+
+.cats { display: grid; gap: 12px; }
+.cat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 10px; }
+.cat-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 16px; align-items: baseline; }
+.cat-head h2 { display: flex; align-items: center; gap: 10px; }
+.swatch { width: 12px; height: 12px; border-radius: 3px; background: var(--c); flex: none; }
+.weight { font-family: var(--mono); color: var(--muted); font-size: 0.85rem; font-weight: 400; }
+.result { font-family: var(--mono); font-size: 0.95rem; }
+.result .tag { font-family: var(--body); font-size: 0.75rem; padding: 2px 8px; border-radius: 99px; background: var(--bg); color: var(--muted); margin-left: 6px; }
+.note { font-size: 0.82rem; color: var(--muted); margin: 0; }
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.slot { display: grid; gap: 4px; }
+.slot .row { gap: 8px; flex-wrap: nowrap; }
+.slot input[type=range] { min-width: 0; }
+.list input[type=text] { width: 100%; }
+
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; }
+button {
+  font: inherit; font-size: 0.88rem; cursor: pointer; border-radius: 8px; padding: 7px 12px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+button:hover { border-color: var(--accent); }
+.banner { font-size: 0.85rem; background: var(--accent-soft); border-radius: 8px; padding: 8px 12px; }
+footer { color: var(--muted); font-size: 0.82rem; display: grid; gap: 6px; }
+footer p { margin: 0; max-width: 70ch; }
+
+@media (max-width: 560px) {
+  .targets { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .letter { font-size: 3rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bar .seg { transition: width 0.25s ease; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>BIOS 1207 Grade Calculator</h1>
+    <p class="sub">Fall 2026 · Biological Principles. Change any score below and the grade updates as you type.</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="banner" id="exampleBanner">Showing example scores. Replace them with your own, or clear everything to start fresh.</div>
+    <div class="row">
+      <button id="clearBtn" type="button">Clear all scores</button>
+      <button id="exampleBtn" type="button">Load example</button>
+    </div>
+  </div>
+
+  <section class="summary" aria-live="polite">
+    <div class="headline">
+      <div class="big">
+        <div class="letter" id="letter">–</div>
+        <div>
+          <div class="label" id="pctLabel">Projected final grade</div>
+          <div class="pct" id="pct">–</div>
+        </div>
+      </div>
+      <div class="stat"><span class="label">Average on graded work</span><span class="num" id="cur">–</span></div>
+      <div class="stat"><span class="label">Points banked</span><span class="num" id="banked">–</span></div>
+    </div>
+
+    <div>
+      <div class="bar" id="bar"><div class="fill" id="fill"></div></div>
+      <div class="legend" id="legend"></div>
+    </div>
+
+    <div>
+      <div class="label" style="margin-bottom:8px" id="targetsLabel">Score needed on the final exam</div>
+      <div class="targets" id="targets"></div>
+    </div>
+
+    <div class="controls">
+      <div class="control">
+        <span class="label">Assume ungraded work scores</span>
+        <div class="row">
+          <input type="range" id="assumeRange" min="0" max="100" step="1" value="85" aria-label="Assumed score for ungraded work">
+          <span class="num" id="assumeOut">85%</span>
+        </div>
+        <label class="check"><input type="checkbox" id="assumeMatch" checked> Use my current average</label>
+      </div>
+      <div class="control">
+        <span class="label">Top-5% class average (curve)</span>
+        <div class="row">
+          <input type="number" id="top5" min="50" max="100" step="0.1" placeholder="none" aria-label="Top 5 percent class average">
+          <span class="note">Leave blank until announced. The curve can only raise your grade.</span>
+        </div>
+        <label class="check"><input type="checkbox" id="dropsNow" checked> Drop lowest scores now (the course drops them at the end)</label>
+      </div>
+    </div>
+  </section>
+
+  <div class="cats" id="cats"></div>
+
+  <footer>
+    <p>Weights from the syllabus: midterms 40%, final 20%, IKEs 5%, TICAs 5%, homework 10%, group project 20%, writing 5%. They total 105%, so 5% is built-in extra credit and the grade caps at 100%.</p>
+    <p>Dropped: the 4 lowest IKE/TICA sessions (pooled), the lowest homework, and the lowest of the 6 writing assignments. Cutoffs: A ≥ 90, B ≥ 80, C ≥ 70, D ≥ 60. A missed midterm without an approved makeup counts as 0.</p>
+    <p>Your scores are saved in this browser only. This is an estimate; Canvas and your instructors have the official grade.</p>
+  </footer>
+</div>
+
+<script>
+const CATS = [
+  { key: "midterms", name: "Midterm exams", weight: 40, kind: "slots", slots: ["Exam 1", "Exam 2", "Exam 3", "Exam 4"], color: "--seg1",
+    note: "Each exam is 10% of your grade." },
+  { key: "final", name: "Final exam", weight: 20, kind: "slots", slots: ["Final"], color: "--seg2" },
+  { key: "iketica", name: "IKEs + TICAs", weight: 10, kind: "list", drops: 4, color: "--seg3",
+    note: "Learning Catalytics sessions, all counted equally. The 4 lowest are dropped." },
+  { key: "homework", name: "Homework", weight: 10, kind: "list", drops: 1, color: "--seg4",
+    note: "Weekly Learning Catalytics homework, due Mondays 11:59 pm. Lowest is dropped." },
+  { key: "project", name: "Group project", weight: 20, kind: "slots", slots: ["Project"], color: "--seg5",
+    note: "Video summary plus scientist biographical sketch. Peer reviews can lower an individual's score." },
+  { key: "writing", name: "Writing assignments", weight: 5, kind: "list", drops: 1, max: 6, color: "--seg6",
+    note: "Scientist Spotlights and Metacognition assignments (6 total). Lowest is dropped." },
+];
+const CUTOFFS = [["A", 90], ["B", 80], ["C", 70], ["D", 60]];
+const STORE = "bios1207-grades-v1";
+
+const EXAMPLE = {
+  midterms: ["84", "82", "", ""], final: [""], project: [""],
+  iketica: "100, 100, 80, 0, 100, 100, 90, 100, 100, 60, 100, 100",
+  homework: "90, 70, 100, 95",
+  writing: "8/10, 10/10",
+  assume: 85, assumeMatch: true, top5: "", dropsNow: true, example: true,
+};
+const EMPTY = {
+  midterms: ["", "", "", ""], final: [""], project: [""], iketica: "", homework: "", writing: "",
+  assume: 85, assumeMatch: true, top5: "", dropsNow: true, example: false,
+};
+
+let state = load() || structuredClone(EXAMPLE);
+
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(STORE)); return s && s.midterms ? s : null; } catch { return null; }
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
+}
+
+function parseScore(t) {
+  t = String(t).trim().replace(/%$/, "");
+  if (t === "") return null;
+  if (t.includes("/")) {
+    const [a, b] = t.split("/").map(Number);
+    return b > 0 && isFinite(a) ? (100 * a) / b : null;
+  }
+  const v = Number(t);
+  return isFinite(v) ? v : null;
+}
+function parseList(text) {
+  return String(text).split(/[,\s;]+/).map(parseScore).filter(v => v !== null);
+}
+function avgAfterDrops(scores, drops) {
+  if (!scores.length) return null;
+  const kept = [...scores].sort((a, b) => a - b).slice(Math.min(drops, scores.length - 1));
+  return kept.reduce((s, v) => s + v, 0) / kept.length;
+}
+function fmt(v, d = 1) { return v === null || !isFinite(v) ? "–" : v.toFixed(d); }
+function letterFor(p) { for (const [g, c] of CUTOFFS) if (p >= c) return g; return "F"; }
+
+// For each category: graded weight + its average, and ungraded weight (to fill with the assumption).
+function analyze() {
+  const out = {};
+  for (const c of CATS) {
+    if (c.kind === "slots") {
+      const vals = state[c.key].map(parseScore);
+      const per = c.weight / vals.length;
+      const graded = vals.filter(v => v !== null);
+      out[c.key] = {
+        avg: graded.length ? graded.reduce((s, v) => s + v, 0) / graded.length : null,
+        gradedW: per * graded.length, openW: per * (vals.length - graded.length), count: graded.length,
+      };
+    } else {
+      let scores = parseList(state[c.key]);
+      if (c.max) scores = scores.slice(0, c.max);
+      const avg = state.dropsNow ? avgAfterDrops(scores, c.drops) : (scores.length ? scores.reduce((s, v) => s + v, 0) / scores.length : null);
+      out[c.key] = { avg, gradedW: avg === null ? 0 : c.weight, openW: avg === null ? c.weight : 0, count: scores.length, raw: scores.length };
+    }
+  }
+  return out;
+}
+
+function compute() {
+  const a = analyze();
+  let banked = 0, gradedW = 0;
+  for (const c of CATS) {
+    const r = a[c.key];
+    if (r.avg !== null) { banked += r.gradedW * r.avg / 100; gradedW += r.gradedW; }
+  }
+  const current = gradedW ? 100 * banked / gradedW : null;
+  const assume = state.assumeMatch && current !== null ? current : Number(state.assume);
+  let projected = 0;
+  const segs = [];
+  for (const c of CATS) {
+    const r = a[c.key];
+    const real = r.avg !== null ? r.gradedW * r.avg / 100 : 0;
+    const fill = r.openW * assume / 100;
+    projected += real + fill;
+    segs.push({ c, real, fill });
+  }
+  const raw = Math.min(100, projected);
+  const top5 = parseFloat(state.top5);
+  const curved = top5 > 0 ? Math.min(100, Math.max(raw, 100 * raw / top5)) : raw;
+
+  // Score needed on the final: everything except the final, with gaps at the assumption.
+  const fr = a.final;
+  let needs = null;
+  if (fr.count === 0) {
+    const base = projected - fr.openW * assume / 100;
+    const scale = top5 > 0 ? Math.min(1, top5 / 100) : 1;
+    needs = CUTOFFS.map(([g, cut]) => [g, 100 * (cut * scale - base) / 20]);
+  }
+  const allGraded = CATS.every(c => a[c.key].openW === 0);
+  return { a, banked, gradedW, current, assume, raw, curved, top5, segs, needs, allGraded };
+}
+
+function render() {
+  const r = compute();
+  const $ = id => document.getElementById(id);
+
+  $("letter").textContent = r.gradedW ? letterFor(r.curved) : "–";
+  $("pct").textContent = r.gradedW ? fmt(r.curved, 2) + "%" : "–";
+  $("pctLabel").textContent = r.allGraded ? "Final grade" : "Projected final grade";
+  $("cur").textContent = r.current === null ? "Nothing graded yet" : `${fmt(r.current, 2)}% (${letterFor(r.current)})`;
+  $("banked").textContent = `${fmt(r.banked, 1)} of ${fmt(r.gradedW, 0)} graded`;
+
+  // Stacked bar on a 0–100 scale (the 105th point of extra credit is clipped at the cap).
+  const fill = $("fill");
+  fill.innerHTML = "";
+  let used = 0;
+  for (const s of r.segs) {
+    for (const [pts, cls] of [[s.real, ""], [s.fill, "assumed"]]) {
+      const w = Math.max(0, Math.min(pts, 100 - used));
+      used += w;
+      if (w <= 0) continue;
+      const d = document.createElement("div");
+      d.className = "seg " + cls;
+      d.style.width = w + "%";
+      d.style.background = `var(${s.c.color})`;
+      d.title = `${s.c.name}: ${pts.toFixed(2)} pts${cls ? " (assumed)" : ""}`;
+      fill.appendChild(d);
+    }
+  }
+  const bar = $("bar");
+  bar.querySelectorAll(".tick, .ticklabel").forEach(e => e.remove());
+  const scale = r.top5 > 0 ? Math.min(1, r.top5 / 100) : 1;
+  for (const [g, cut] of CUTOFFS) {
+    const x = cut * scale;
+    const t = document.createElement("div"); t.className = "tick"; t.style.left = `calc(${x}% - 1px)`;
+    const l = document.createElement("div"); l.className = "ticklabel"; l.style.left = x + "%"; l.textContent = `${g} ${fmt(x, x % 1 ? 1 : 0)}`;
+    bar.append(t, l);
+  }
+  $("legend").innerHTML = CATS.map(c => `<span style="--c: var(${c.color})">${c.name}</span>`).join("") +
+    `<span style="--c: var(--muted); opacity:.6">Faded = assumed at ${fmt(r.assume, 0)}%</span>`;
+
+  // Final exam targets.
+  const targets = $("targets");
+  if (r.needs) {
+    $("targetsLabel").textContent = `Score needed on the final exam (other ungraded work at ${fmt(r.assume, 0)}%)`;
+    targets.innerHTML = r.needs.map(([g, n]) => {
+      const cls = n <= 0 ? "ok" : n > 100 ? "no" : "";
+      const txt = n <= 0 ? "Locked in" : n > 100 ? `${fmt(n)}% · out of reach` : `${fmt(n)}%`;
+      return `<div class="target ${cls}"><b>${g}</b><span class="num">${txt}</span></div>`;
+    }).join("");
+  } else {
+    $("targetsLabel").textContent = "Final exam entered. Distance to each cutoff";
+    targets.innerHTML = CUTOFFS.map(([g, cut]) => {
+      const gap = r.curved - cut;
+      return `<div class="target ${gap >= 0 ? "ok" : ""}"><b>${g}</b><span class="num">${gap >= 0 ? "+" : ""}${fmt(gap, 2)} pts</span></div>`;
+    }).join("");
+  }
+
+  // Assumption control.
+  $("assumeRange").value = Math.round(r.assume);
+  $("assumeRange").disabled = state.assumeMatch && r.current !== null;
+  $("assumeOut").textContent = fmt(r.assume, 0) + "%";
+
+  // Category results.
+  for (const c of CATS) {
+    const ar = r.a[c.key];
+    const el = document.getElementById("res-" + c.key);
+    let tag = "";
+    if (c.kind === "list") tag = ar.raw ? `${ar.raw} score${ar.raw > 1 ? "s" : ""}${state.dropsNow && ar.raw > 1 ? `, ${Math.min(c.drops, ar.raw - 1)} dropped` : ""}` : "not graded yet";
+    else tag = ar.count ? `${ar.count} of ${c.slots.length} graded` : "not graded yet";
+    el.innerHTML = `${ar.avg === null ? `assumed ${fmt(r.assume, 0)}%` : fmt(ar.avg) + "%"}<span class="tag">${tag}</span>`;
+  }
+  document.getElementById("exampleBanner").hidden = !state.example;
+}
+
+function buildCats() {
+  const host = document.getElementById("cats");
+  host.innerHTML = "";
+  for (const c of CATS) {
+    const sec = document.createElement("section");
+    sec.className = "cat";
+    sec.style.setProperty("--c", `var(${c.color})`);
+    let body = "";
+    if (c.kind === "slots") {
+      body = `<div class="slots">` + c.slots.map((s, i) => `
+        <div class="slot">
+          <label class="label" for="${c.key}-${i}">${s}</label>
+          <div class="row">
+            <input type="number" id="${c.key}-${i}" min="0" max="110" step="0.5" placeholder="—" value="${state[c.key][i] ?? ""}">
+            <input type="range" id="${c.key}-${i}-r" min="0" max="100" step="1" value="${parseScore(state[c.key][i] ?? "") ?? 0}" aria-label="${s} slider">
+          </div>
+        </div>`).join("") + `</div>`;
+    } else {
+      body = `<div class="list">
+        <label class="label" for="${c.key}-list">Scores, separated by commas (percent or points like 8/10)</label>
+        <input type="text" id="${c.key}-list" inputmode="decimal" placeholder="e.g. 100, 90, 8/10" value="${state[c.key]}">
+      </div>`;
+    }
+    sec.innerHTML = `
+      <div class="cat-head">
+        <h2><span class="swatch"></span>${c.name} <span class="weight">${c.weight}%</span></h2>
+        <div class="result" id="res-${c.key}"></div>
+      </div>
+      ${body}
+      ${c.note ? `<p class="note">${c.note}</p>` : ""}`;
+    host.appendChild(sec);
+
+    if (c.kind === "slots") {
+      c.slots.forEach((_, i) => {
+        const num = document.getElementById(`${c.key}-${i}`);
+        const rng = document.getElementById(`${c.key}-${i}-r`);
+        rng.style.opacity = num.value === "" ? 0.4 : 1;
+        num.addEventListener("input", () => {
+          state[c.key][i] = num.value; touched();
+          const v = parseScore(num.value); rng.value = v ?? 0; rng.style.opacity = v === null ? 0.4 : 1;
+        });
+        rng.addEventListener("input", () => {
+          num.value = rng.value; state[c.key][i] = rng.value; rng.style.opacity = 1; touched();
+        });
+      });
+    } else {
+      const inp = document.getElementById(`${c.key}-list`);
+      inp.addEventListener("input", () => { state[c.key] = inp.value; touched(); });
+    }
+  }
+}
+
+function syncControls() {
+  document.getElementById("assumeMatch").checked = state.assumeMatch;
+  document.getElementById("top5").value = state.top5;
+  document.getElementById("dropsNow").checked = state.dropsNow;
+}
+function touched() { state.example = false; save(); render(); }
+
+document.getElementById("assumeRange").addEventListener("input", e => { state.assume = Number(e.target.value); save(); render(); });
+document.getElementById("assumeMatch").addEventListener("change", e => { state.assumeMatch = e.target.checked; save(); render(); });
+document.getElementById("top5").addEventListener("input", e => { state.top5 = e.target.value; save(); render(); });
+document.getElementById("dropsNow").addEventListener("change", e => { state.dropsNow = e.target.checked; save(); render(); });
+document.getElementById("clearBtn").addEventListener("click", () => { state = structuredClone(EMPTY); save(); syncControls(); buildCats(); render(); });
+document.getElementById("exampleBtn").addEventListener("click", () => { state = structuredClone(EXAMPLE); save(); syncControls(); buildCats(); render(); });
+
+syncControls();
+buildCats();
+render();
+</script>
