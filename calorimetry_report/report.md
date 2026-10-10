@@ -6,7 +6,7 @@ author: "Sophia Chen"
 
 # Abstract
 
-Some reactions are hard to measure directly, and the formation of zinc oxide from zinc and oxygen is one of them, since it releases a lot of heat and is not easy to control in a coffee-cup setup. The goal of this experiment was to get around that by using Hess's Law. A styrofoam coffee-cup calorimeter was first calibrated by mixing 40.00 mL of hot water (50.0 °C) with 40.00 mL of room temperature water over three trials. The calorimeter constant came out to an average of −5.03 ± 8.30 J/°C, which is basically zero within the spread of the data and suggests the cups absorbed very little heat. Next, 0.100 g of zinc powder and 0.399 g of zinc oxide were each reacted with 30.00 mL of 6.0 M HCl. The zinc reaction raised the temperature by 2.5 °C and gave an enthalpy change of −197 kJ/mol, and the zinc oxide reaction raised the temperature by 3.6 °C and gave −88.5 kJ/mol. Combining these two values with the known formation enthalpy of water (−285.8 kJ/mol) gave an experimental enthalpy for the oxidation of zinc of −394 kJ/mol. Compared to the accepted value of −350.5 kJ/mol, this is a percent error of about 12.5%. The result shows that Hess's Law can give a reasonable estimate for a reaction that would be difficult to run on its own, even with simple equipment. Most of the error likely comes from heat lost to the surroundings, the small temperature changes measured, and the thermometer's limited precision.
+Calorimetry is a way of measuring the heat a reaction gives off or takes in by tracking the temperature change of an insulated bath of liquid around it. The formation of zinc oxide from zinc and oxygen is hard to measure directly because it releases a lot of heat, so the goal of this experiment was to find its enthalpy indirectly using Hess's Law. A styrofoam coffee-cup calorimeter was first calibrated by mixing 40.00 mL of hot water (50.0 °C) with 40.00 mL of room temperature water over three trials. The calorimeter constant came out to −5.03 ± 8.30 J/°C, which is basically zero and means the cups absorbed very little heat. Next, 0.100 g of zinc powder and 0.399 g of zinc oxide were each reacted with 30.00 mL of 6.0 M HCl. The zinc reaction raised the temperature by 2.5 °C and gave an enthalpy change of −197 kJ/mol, and the zinc oxide reaction raised the temperature by 3.6 °C and gave −88.5 kJ/mol. Combining these two values with the known formation enthalpy of water (−285.8 kJ/mol) gave an experimental enthalpy for the oxidation of zinc of −394 kJ/mol. Compared to the accepted value of −350.5 kJ/mol, this is a percent error of about 12.5%. Since the answer has the correct sign and lands within about 13% of the accepted value, the results support coffee-cup calorimetry combined with Hess's Law as a useful way to measure reaction enthalpies, even with simple equipment. Most of the error likely comes from heat lost to the surroundings, the small temperature changes measured, and the thermometer's limited precision.
 
 # Data and Results
 
@@ -22,8 +22,8 @@ Table 1. Determination of the calorimeter constant.
 | Δ*T*~hot~ (°C) | −14.2 | −14.7 | −14.7 |
 | Δ*T*~cold~ (°C) | 15.5 | 15.0 | 14.5 |
 | Δ*T*~cal~ (°C) | 15.5 | 15.0 | 14.5 |
-| *q*~hot~ (J) | −2376.5 | −2460.2 | −2460.2 |
-| *q*~cold~ (J) | 2594.1 | 2510.4 | 2426.7 |
+| *q*~hot~ (J) | −2377 | −2460 | −2460 |
+| *q*~cold~ (J) | 2594 | 2510 | 2427 |
 | *q*~cal~ (J) | −217.6 | −50.2 | 33.5 |
 | *C*~cal~ (J/°C) | −14.04 | −3.35 | 2.31 |
 | Average *C*~cal~ (J/°C) | −5.03 | | |
@@ -67,17 +67,17 @@ Using Trial 1, the heat for each water sample is found with *q* = *mc*Δ*T*, whe
 
 $$\Delta T_{hot} = T_{final} - T_{hot} = 35.8\,^{\circ}\mathrm{C} - 50.0\,^{\circ}\mathrm{C} = -14.2\,^{\circ}\mathrm{C}$$
 
-$$q_{hot} = m_{hot}\,c\,\Delta T_{hot} = (40.00\ \mathrm{g})(4.184\ \mathrm{J/g\cdot ^{\circ}C})(-14.2\,^{\circ}\mathrm{C}) = -2376.5\ \mathrm{J}$$
+$$q_{hot} = m_{hot}\,c\,\Delta T_{hot} = (40.00\ \mathrm{g})(4.184\ \mathrm{J/g\cdot ^{\circ}C})(-14.2\,^{\circ}\mathrm{C}) = -2377\ \mathrm{J}$$
 
 The cold water warmed from 20.3 °C to 35.8 °C, so
 
 $$\Delta T_{cold} = T_{final} - T_{cold} = 35.8\,^{\circ}\mathrm{C} - 20.3\,^{\circ}\mathrm{C} = 15.5\,^{\circ}\mathrm{C}$$
 
-$$q_{cold} = m_{cold}\,c\,\Delta T_{cold} = (40.00\ \mathrm{g})(4.184\ \mathrm{J/g\cdot ^{\circ}C})(15.5\,^{\circ}\mathrm{C}) = 2594.1\ \mathrm{J}$$
+$$q_{cold} = m_{cold}\,c\,\Delta T_{cold} = (40.00\ \mathrm{g})(4.184\ \mathrm{J/g\cdot ^{\circ}C})(15.5\,^{\circ}\mathrm{C}) = 2594\ \mathrm{J}$$
 
-Rearranging the heat balance gives the heat taken in by the calorimeter:
+Rearranging the heat balance gives the heat taken in by the calorimeter. The unrounded values of *q*~hot~ and *q*~cold~ (−2376.5 J and 2594.1 J) were carried through here so rounding would not throw off the small difference between them:
 
-$$q_{cal} = -(q_{hot} + q_{cold}) = -(-2376.5\ \mathrm{J} + 2594.1\ \mathrm{J}) = -217.6\ \mathrm{J}$$
+$$q_{cal} = -(q_{hot} + q_{cold}) = -(-2377\ \mathrm{J} + 2594\ \mathrm{J}) = -217.6\ \mathrm{J}$$
 
 The calorimeter starts at room temperature along with the cold water, so its temperature change is the same as the cold water's (Δ*T*~cal~ = 15.5 °C). Dividing the heat by this temperature change gives the calorimeter constant:
 
@@ -93,7 +93,13 @@ and the reaction of zinc oxide with hydrochloric acid is
 
 $$\mathrm{ZnO(s) + 2\,HCl(aq) \rightarrow ZnCl_2(aq) + H_2O(l)} \qquad \Delta H_B$$
 
-This time the reaction is the system, and the solution and calorimeter walls are the surroundings. Any heat the reaction gives off is picked up by those two, so
+This time the reaction is the system, and the solution and calorimeter walls are the surroundings. Figure 1 shows how heat moves in the cup during the zinc reaction. The zinc particles react at the bottom, and since the reaction is exothermic, heat flows out of them into the HCl solution, and from the solution into the calorimeter walls. A little heat also escapes through the walls to the air, but that is assumed to be negligible. So the same kind of heat balance applies as before: the heat released by the reaction, plus the heat absorbed by the solution and the walls, adds up to zero.
+
+![Figure 1. Heat flow in the coffee-cup calorimeter during the exothermic reaction of Zn(s) with HCl(aq). Arrows show heat moving from the reacting zinc into the solvent and from the solvent into the calorimeter walls.](figure1.png){width=5.5in}
+
+$$q_{rxn} + q_{soln} + q_{cal} = 0$$
+
+Rearranging and writing each surroundings term in terms of the measured temperature change gives
 
 $$q_{rxn} = -(q_{soln} + q_{cal}) = -(m_{soln}\,c\,\Delta T + C_{cal}\,\Delta T)$$
 
@@ -143,4 +149,4 @@ $$\Delta H_{rxn} = \Delta H_A + (-\Delta H_B) + \Delta H_C$$
 
 $$\Delta H_{rxn} = (-197\ \mathrm{kJ/mol}) + (88.5\ \mathrm{kJ/mol}) + (-285.8\ \mathrm{kJ/mol}) = -394\ \mathrm{kJ/mol}$$
 
-The accepted standard enthalpy of formation of ZnO is −350.5 kJ/mol, so the measured value of −394 kJ/mol has a percent error of about 12.5%. The sign is right and the size is in the right range, so the method clearly worked, but the result came out more negative than it should be. Since the zinc oxide step is subtracted, anything that made Δ*H*~B~ look too small would push the final answer in this direction. A likely cause is that the ZnO did not fully dissolve or reacted slowly, so some of its heat leaked out before the temperature peaked. The temperature changes in both reactions were also small (2.5 and 3.6 °C), so a reading that is off by just 0.1 °C changes the result by around 3 to 4%. Using a thermometer with better precision, a larger sample, or a better insulated calorimeter would all help bring the value closer to the accepted one.
+The target reaction is the formation of ZnO from its elements, so its theoretical enthalpy is just the standard enthalpy of formation of ZnO, −350.5 kJ/mol. The negative sign means the oxidation of zinc releases heat, the same as the measured value. Compared to this, the measured value of −394 kJ/mol has a percent error of 12.5%. The sign is right and the size is in the right range, so the method clearly worked, but the result came out more negative than it should be. Since the zinc oxide step is subtracted, anything that made Δ*H*~B~ look too small would push the final answer in this direction. A likely cause is that the ZnO did not fully dissolve or reacted slowly, so some of its heat leaked out before the temperature peaked. The temperature changes in both reactions were also small (2.5 and 3.6 °C), so a reading that is off by just 0.1 °C changes the result by around 3 to 4%. Using a thermometer with better precision, a larger sample, or a better insulated calorimeter would all help bring the value closer to the accepted one.
